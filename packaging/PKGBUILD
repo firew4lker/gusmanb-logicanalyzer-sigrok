@@ -53,12 +53,14 @@ source=(
   "$_pkgname-swig-4.1.patch"
   "$_pkgname-fix-ruby-binding-location.patch"
   "$_pkgname-python-3.14.patch"
+  "$_pkgname-swig-4.5-pyint.patch"
   "0001-gusmanb-logicanalyzer-driver.patch"
 )
 b2sums=('cc85375263dac22adc2f826140d21e3b0643da4fdf59121c99b4220f09d123e29afe9933d7f47f1a0e71864f8afff6a23d75ac99449064023b7f35b5a726dede'
         '4dfed37681870e312acf8844aed8a69ef4998f446b8565552258c38d824f566257e559e5d909282bf2d8f1202019bcfc070722abba6b34ff36c4b81b6ffccc04'
         '348ba0e8615b81001444d6888eb392bfd5cc07fd71adff4bd65b6525a29cbf0cb76dd7b3aadd0971865a8fa482769d624d632c6fdd3e17b6fcaf2c75dff5aaab'
         '9141203f928d6152f04b3962015645369cfbc72e3b7649b34c6fc2e385ee0f47c120063148e2edb699f0e494b19a09a3e3a780630786bbd3266fc82d7902a446'
+        '0282edabc253ba0917e9ee197cdad46d7faf083b8a89f46911460010363128472c8e154635a0844c2a205eaa64fed1dabba4ffdb91756ac27be370e511722919'
         'e60c58dfc6b892364580d8451346f84891c8c906a57b830e1e07ae47044a50a1a73c0136ed17f94747a8be012b91a11a2c67c92c934643dee097bd6b4ccb37ba')
 
 prepare() {
@@ -73,6 +75,9 @@ prepare() {
   patch -p1 < ../$_pkgname-swig-4.1.patch
   patch -p1 < ../$_pkgname-fix-ruby-binding-location.patch
   patch -p1 < ../$_pkgname-python-3.14.patch
+  # SWIG >= 4.5 dropped the PyInt_* compatibility macros (not in Arch's
+  # package yet, which was last built with an older SWIG).
+  patch -p1 < ../$_pkgname-swig-4.5-pyint.patch
 
   # gusmanb LogicAnalyzer driver.
   patch -p1 < ../0001-gusmanb-logicanalyzer-driver.patch

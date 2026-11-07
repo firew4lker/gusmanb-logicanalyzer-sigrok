@@ -1,0 +1,23 @@
+diff --git a/bindings/python/sigrok/core/classes.i b/bindings/python/sigrok/core/classes.i
+index a00efff2..9affd158 100644
+--- a/bindings/python/sigrok/core/classes.i
++++ b/bindings/python/sigrok/core/classes.i
+@@ -47,6 +47,18 @@ which provides access to the error code and description."
+ %{
+ #include "config.h"
+ 
++/*
++ * SWIG >= 4.5 no longer provides the Python 2 compatibility macros
++ * PyInt_Check/PyInt_AsLong that these bindings use.
++ */
++#include <Python.h>
++#ifndef PyInt_Check
++#define PyInt_Check PyLong_Check
++#endif
++#ifndef PyInt_AsLong
++#define PyInt_AsLong PyLong_AsLong
++#endif
++
+ #include <stdio.h>
+ #include <pygobject.h>
+ #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
