@@ -69,35 +69,16 @@ static int dev_clear(const struct sr_dev_driver *di)
 		(std_dev_clear_callback)clear_helper);
 }
 
-static GSList *scan(struct sr_dev_driver *di, GSList *options)
+/* Probe one serial port. Returns a new device instance, or NULL. */
+static struct sr_dev_inst *probe_port(const char *conn, const char *serialcomm)
 {
-	struct sr_config *src;
 	struct sr_dev_inst *sdi;
 	struct sr_serial_dev_inst *serial;
 	struct dev_context *devc;
-	GSList *l;
-	const char *conn, *serialcomm;
 	char *comm;
 	char name[8];
 	unsigned int i;
 	int ret, attempt;
-
-	conn = serialcomm = NULL;
-	for (l = options; l; l = l->next) {
-		src = l->data;
-		switch (src->key) {
-		case SR_CONF_CONN:
-			conn = g_variant_get_string(src->data, NULL);
-			break;
-		case SR_CONF_SERIALCOMM:
-			serialcomm = g_variant_get_string(src->data, NULL);
-			break;
-		}
-	}
-	if (!conn)
-		return NULL;
-	if (!serialcomm)
-		serialcomm = SERIALCOMM;
 
 	/*
 	 * Front ends may pass their own serialcomm (PulseView sends e.g.
@@ -169,7 +150,49 @@ static GSList *scan(struct sr_dev_driver *di, GSList *options)
 		sr_channel_new(sdi, i, SR_CHANNEL_LOGIC, TRUE, name);
 	}
 
-	return std_scan_complete(di, g_slist_append(NULL, sdi));
+	return sdi;
+}
+
+/*
+ * With conn= only that port is probed. Without it, every serial port with
+ * the analyzer's USB ID (pid.codes 1209:3020, set by the firmware) is
+ * probed, so "sigrok-cli --scan" and PulseView find it on any port.
+ */
+static GSList *scan(struct sr_dev_driver *di, GSList *options)
+{
+	struct sr_config *src;
+	struct sr_dev_inst *sdi;
+	GSList *l, *ports, *devices;
+	const char *conn, *serialcomm;
+
+	conn = serialcomm = NULL;
+	for (l = options; l; l = l->next) {
+		src = l->data;
+		switch (src->key) {
+		case SR_CONF_CONN:
+			conn = g_variant_get_string(src->data, NULL);
+			break;
+		case SR_CONF_SERIALCOMM:
+			serialcomm = g_variant_get_string(src->data, NULL);
+			break;
+		}
+	}
+	if (!serialcomm)
+		serialcomm = SERIALCOMM;
+
+	devices = NULL;
+	if (conn) {
+		if ((sdi = probe_port(conn, serialcomm)))
+			devices = g_slist_append(devices, sdi);
+	} else {
+		ports = sr_serial_find_usb(GLA_USB_VID, GLA_USB_PID);
+		for (l = ports; l; l = l->next)
+			if ((sdi = probe_port(l->data, serialcomm)))
+				devices = g_slist_append(devices, sdi);
+		g_slist_free_full(ports, g_free);
+	}
+
+	return std_scan_complete(di, devices);
 }
 
 static int config_get(uint32_t key, GVariant **data,

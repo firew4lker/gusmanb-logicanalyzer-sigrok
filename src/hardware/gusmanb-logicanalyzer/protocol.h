@@ -32,6 +32,10 @@
  * RP2040/RP2350 based, firmware V6_0 and later.
  */
 
+/* USB ID of the firmware's CDC device (pid.codes). */
+#define GLA_USB_VID		0x1209
+#define GLA_USB_PID		0x3020
+
 #define GLA_MIN_MAJOR		6
 #define GLA_MIN_MINOR		0
 

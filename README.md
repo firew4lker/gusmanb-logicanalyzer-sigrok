@@ -66,22 +66,29 @@ tools/build-dev.sh --reconf
 ```
 
 Then plug in the analyzer. It appears as `/dev/ttyACM0`, which your user
-can open because it is in the `uucp` group.
+can open because it is in the `uucp` group. **No port needs to be given:**
+the driver finds analyzers by their USB ID (`1209:3020`). Add
+`:conn=/dev/ttyACMn` to pick one explicitly.
 
 ```bash
-tools/sigrok-cli-gla -d gusmanb-logicanalyzer:conn=/dev/ttyACM0 --show
+tools/sigrok-cli-gla -d gusmanb-logicanalyzer --show
 ```
 
 ```bash
-tools/sigrok-cli-gla -d gusmanb-logicanalyzer:conn=/dev/ttyACM0 --channels D0,D1,D2,D3 --config samplerate=10m --samples 100000 --config captureratio=10 --triggers D0=r -o capture.sr
+tools/sigrok-cli-gla -d gusmanb-logicanalyzer --channels D0,D1,D2,D3 --config samplerate=10m --samples 100000 --config captureratio=10 --triggers D0=r -o capture.sr
 ```
 
 ```bash
 tools/pulseview-gla
 ```
 
-In PulseView, open *Connect to Device*, choose **gusmanb LogicAnalyzer**,
-select *Serial Port* `/dev/ttyACM0` and scan.
+In PulseView, open *Connect to Device*, choose **gusmanb LogicAnalyzer**
+and click *Scan for devices*. The interface choice can stay at its
+default; you only need *Serial Port* to force a specific port.
+
+A port that another program has open (e.g. a running PulseView) can't be
+probed: libsigrok logs "Device or resource busy" and the scan finds
+nothing.
 
 To use the driver from the normal menu entries (without the wrappers),
 build and install the package. This replaces Arch's `libsigrok`, and needs
