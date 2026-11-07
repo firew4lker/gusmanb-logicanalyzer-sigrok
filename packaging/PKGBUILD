@@ -1,0 +1,95 @@
+# Arch's libsigrok 0.5.2 package plus the gusmanb LogicAnalyzer driver.
+# Based on https://gitlab.archlinux.org/archlinux/packaging/packages/libsigrok
+# (pkgrel 26). Everything except the driver patch is unchanged, so the
+# installed PulseView / sigrok-cli keep working as before.
+
+pkgname=libsigrok-gusmanb
+_pkgname=libsigrok
+pkgver=0.5.2
+pkgrel=1
+pkgdesc='libsigrok with the gusmanb LogicAnalyzer (RP2040/RP2350) driver'
+arch=('x86_64')
+url='https://www.sigrok.org/wiki/Libsigrok'
+license=('GPL-3.0-or-later')
+depends=(
+  'bluez-libs'
+  'glib2'
+  'glibc'
+  'glibmm'
+  'hidapi'
+  'libftdi'
+  'libgcc'
+  'libieee1284'
+  'libserialport'
+  'libsigc++'
+  'libstdc++'
+  'libusb'
+  'libzip'
+)
+makedepends=(
+  'autoconf-archive'
+  'cmake'
+  'doxygen'
+  'git'
+  'jdk8-openjdk'
+  'python'
+  'python-gobject'
+  'python-numpy'
+  'python-setuptools'
+  'ruby'
+  'swig'
+)
+optdepends=(
+  'jdk8-openjdk'
+  'python'
+  'ruby'
+  'sigrok-firmware-fx2lafw: Cypress FX2-based device support'
+)
+provides=("libsigrok=$pkgver" 'libsigrok.so' 'libsigrokcxx.so')
+conflicts=('libsigrok')
+options=(!lto) # FS#78381
+source=(
+  "git+git://sigrok.org/libsigrok#tag=libsigrok-$pkgver"
+  "$_pkgname-swig-4.1.patch"
+  "$_pkgname-fix-ruby-binding-location.patch"
+  "$_pkgname-python-3.14.patch"
+  "0001-gusmanb-logicanalyzer-driver.patch"
+)
+b2sums=('cc85375263dac22adc2f826140d21e3b0643da4fdf59121c99b4220f09d123e29afe9933d7f47f1a0e71864f8afff6a23d75ac99449064023b7f35b5a726dede'
+        '4dfed37681870e312acf8844aed8a69ef4998f446b8565552258c38d824f566257e559e5d909282bf2d8f1202019bcfc070722abba6b34ff36c4b81b6ffccc04'
+        '348ba0e8615b81001444d6888eb392bfd5cc07fd71adff4bd65b6525a29cbf0cb76dd7b3aadd0971865a8fa482769d624d632c6fdd3e17b6fcaf2c75dff5aaab'
+        '9141203f928d6152f04b3962015645369cfbc72e3b7649b34c6fc2e385ee0f47c120063148e2edb699f0e494b19a09a3e3a780630786bbd3266fc82d7902a446'
+        '149fde1541bb6776ca8997dbadc67a8d00dc0f0abcea6fe7dde5282819d4135f881f5c01a4379a8afc81e6d6e7db63353e76ee99eac04d7e724b6ef93ac3f805')
+
+prepare() {
+  cd $_pkgname
+  git config user.name builduser
+  git config user.email builduser@archlinux
+
+  # Same fixes as Arch's libsigrok package:
+  git cherry-pick e803574173bdac8a7f33085a648c29eaf248a394
+  git cherry-pick 2e199405e53fee2fb3cad72858ebe7af6990bce0
+  git cherry-pick 5bc8174531df86991ba8aa6d12942923925d9e72
+  patch -p1 < ../$_pkgname-swig-4.1.patch
+  patch -p1 < ../$_pkgname-fix-ruby-binding-location.patch
+  patch -p1 < ../$_pkgname-python-3.14.patch
+
+  # gusmanb LogicAnalyzer driver.
+  patch -p1 < ../0001-gusmanb-logicanalyzer-driver.patch
+
+  autoreconf -fiv
+}
+
+build() {
+  cd $_pkgname
+  ./configure --prefix=/usr --enable-ruby
+  make
+}
+
+package() {
+  cd $_pkgname
+  make DESTDIR="$pkgdir" PREFIX=/usr install
+  install -vDm644 -t "$pkgdir/usr/lib/udev/rules.d" \
+    contrib/60-libsigrok.rules \
+    contrib/61-libsigrok-uaccess.rules
+}

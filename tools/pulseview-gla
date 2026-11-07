@@ -1,0 +1,7 @@
+#!/bin/sh
+# Run the installed PulseView with the libsigrok from tools/build-dev.sh.
+#   tools/pulseview-gla
+#   tools/pulseview-gla -d gusmanb-logicanalyzer:conn=/dev/ttyACM0
+PREFIX=${PREFIX:-$HOME/.local/sigrok}
+LD_LIBRARY_PATH=$PREFIX/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH} \
+PYTHONWARNINGS=${PYTHONWARNINGS:-ignore} exec pulseview "$@"

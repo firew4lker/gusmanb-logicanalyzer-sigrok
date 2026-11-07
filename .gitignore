@@ -1,0 +1,4 @@
+# Upstream clones, build trees, test libraries and test binaries
+/build/
+__pycache__/
+*.pyc
